@@ -1,10 +1,12 @@
 from flask import Flask, render_template, url_for, redirect
 from fakepinterest import app, database, bcrypt
 from flask_login import login_required, login_user, logout_user, current_user
-from fakepinterest.forms import FormLogin, FormCriarConta
-from fakepinterest.models import Usuario
-
-
+from fakepinterest.forms import FormLogin, FormCriarConta, FormFoto
+from fakepinterest.models import Usuario, Foto
+# para trocar o nome do arquivo para armazenar no servidor
+import os
+from werkzeug.utils import secure_filename
+ 
 @app.route('/', methods=['GET', 'POST'])
 def homepage():
     formLogin = FormLogin()
@@ -34,16 +36,31 @@ def criar_conta():
 
 
 
-@app.route('/perfil/<id_usuario>')
+@app.route('/perfil/<id_usuario>', methods=['GET', 'POST'])
 @login_required
 def perfil(id_usuario):
     usuario = Usuario.query.get(int(id_usuario))
-    if id_usuario == int(current_user.id):
+    if int(id_usuario) == int(current_user.id):
         #usuario vê o proprio perfil
-        return render_template('perfil.html', usuario=current_user)
+        print('proprio perfil')
+        form_foto = FormFoto()
+        if form_foto.validate_on_submit():
+            arquivo = form_foto.foto.data
+            nome_seguro = secure_filename(arquivo.filename)
+            # salvar o arquivo na pasta certa
+            #procura o caminho absoluto do arquivo routes, o upload folder e o nome seguro da foto
+            caminho = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                              app.config['UPLOAD_FOLDER'], nome_seguro)
+            arquivo.save(caminho)
+            # registrar o arquivo no bd
+            foto = Foto(imagem=nome_seguro, id_usuario=current_user.id)
+            database.session.add(foto)
+            database.session.commit()
+        return render_template('perfil.html', usuario=current_user, form=form_foto)
+        
     else:
         #vê o de outro usuario
-        return render_template('perfil.html', usuario=usuario)
+        return render_template('perfil.html', usuario=usuario, form=None)
     
  
 
