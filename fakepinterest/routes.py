@@ -7,6 +7,8 @@ from fakepinterest.models import Usuario, Foto
 import os
 from werkzeug.utils import secure_filename
  
+
+
 @app.route('/', methods=['GET', 'POST'])
 def homepage():
     formLogin = FormLogin()
@@ -70,3 +72,10 @@ def perfil(id_usuario):
 def logout():
     logout_user()
     return redirect(url_for('homepage'))
+
+
+@app.route('/feed')
+@login_required
+def feed():
+    fotos = Foto.query.order_by(Foto.data_criacao).all()
+    return render_template('feed.html', fotos=fotos)
