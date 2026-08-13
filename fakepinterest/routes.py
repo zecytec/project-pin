@@ -27,7 +27,7 @@ def criar_conta():
     if formcriarconta.validate_on_submit():
         senha = bcrypt.generate_password_hash(formcriarconta.senha.data)
         usuario = Usuario(username=formcriarconta.username.data, email=formcriarconta.email.data, senha=senha)
-        #duvida
+
     
         database.session.add(usuario)
         database.session.commit()
